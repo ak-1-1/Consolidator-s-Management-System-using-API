@@ -1,0 +1,238 @@
+<html>
+  <head>
+    <title>Update</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    />
+    <style></style>
+  </head>
+  <body>
+    <header>
+      <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">Consolidators.com</a>
+          </div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+          <form class="navbar-form navbar-left">
+            <div class="form-group">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Search"
+                name="search"
+                id="srch"
+              />
+            </div>
+            <button type="submit" class="btn btn-default" id="srch-btn">
+              Submit
+            </button>
+          </form>
+          <form class="navbar-form navbar-right">
+            <button type="submit" class="btn btn-danger" id="username"></button>
+            <button type="submit" class="btn btn-danger" id="logoff-btn">
+              Logout
+            </button>
+          </form>
+        </div>
+      </nav>
+    </header>
+
+    <script
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
+      type="text/javascript"
+    ></script>
+    <div class="form-group">
+      <label for="eid">Txn-id:</label>
+      <input type="text" class="form-control" id="uid" readonly />
+    </div>
+    <div class="form-group">
+      <label for="ename">Username:</label>
+      <input type="text" class="form-control" id="uname" readonly />
+    </div>
+    <div class="form-group">
+      <label for="salary">Journey from:</label>
+      <input type="text" class="form-control" id="jfrom" />
+    </div>
+    <div class="form-group">
+      <label for="doj">Journey to:</label>
+      <input type="text" class="form-control" id="jto" />
+    </div>
+    <div class="form-group">
+      <label for="doj">Number of tickets:</label>
+      <input type="text" class="form-control" id="ntick" />
+    </div>
+    <div class="form-group">
+      <label for="city">Date of journey:</label>
+      <input type="datetime-local" class="form-control" id="doj" />
+    </div>
+
+    <div class="form-group">
+      <label for="city">Company-id:</label>
+      <select name="dropdown" id="dropdown">
+        <option id="deflt"></option>
+      </select>
+    </div>
+
+    <div class="text-center panel-body">
+      <button type="submit" class="btn btn-sm btn-primary" id="UpdateButton">
+        Update
+      </button>
+    </div>
+    <div
+      id="error-message"
+      style="display: none; color: red; margin-top: 10px"
+    ></div>
+
+    <script>
+      $(document).ready(function () {
+        if (localStorage.naam != null) {
+          GetReservation();
+          var selected_val = null;
+          $("#dropdown").on("change", function () {
+            selected_val = $(this).val();
+          });
+          $("#prev").click(function (e) {
+            if (localStorage.naam == "ADMIN") {
+              window.location.href = "showdetails.html";
+            } else {
+              window.location.href = "show_details_user.html";
+            }
+          });
+          var v = document.getElementById("srch");
+          v.style.visibility = "hidden";
+          var v1 = document.getElementById("srch-btn");
+          v1.style.visibility = "hidden";
+          var nm = document.getElementById("username");
+          nm.textContent = localStorage.naam;
+          //alert(localStorage.naam);
+          $.ajax({
+            url: "https://localhost:7074/api/company/",
+            type: "GET",
+            success: function (data) {
+              $.each(data, function (key, value) {
+                $("#dropdown").append(
+                  '<option value="' +
+                    value.cid +
+                    '">' +
+                    value["cname"] +
+                    "</option>"
+                );
+                //alert("444");
+              });
+            },
+            error: function (xhr, status, error) {
+              e.preventDefault();
+              $("#error-message").text(
+                "There is some problem with your data!!please check,all fields are reuired fields"
+              );
+              $("#error-message").show();
+            },
+          });
+          $("#logoff-btn").click(function (e) {
+            e.preventDefault();
+            localStorage.removeItem("naam");
+
+            window.location.href = "login.html";
+          });
+          $("#srch-btn").click(function (e) {
+            e.preventDefault();
+            var v = $("#srch").val();
+            localStorage.search_var = v;
+            //alert(v);
+            window.location.href = "search_list.html";
+          });
+
+          function GetReservation() {
+            let params = new URL(document.location).searchParams;
+            // alert(params);
+            let id = params.get("id");
+            // alert(id);
+
+            $.ajax({
+              url: "https://localhost:7074/api/flht/" + id,
+              type: "get",
+              contentType: "application/json",
+              success: function (result, status, xhr) {
+                $("#uid").val(result["uid"]);
+                $("#uname").val(result["uname"]);
+                $("#jfrom").val(result["jfrom"]);
+                $("#jto").val(result["jto"]);
+                $("#ntick").val(result["nticket"]);
+                $("#doj").val(result["doj"]);
+                $("#deflt").val(result["cid"]);
+              },
+              error: function (xhr, status, error) {
+                //console.log(xhr);
+                $("#error-message").text(
+                  "There is some problem!!please contact us "
+                );
+                $("#error-message").show();
+              },
+            });
+          }
+
+          $("#UpdateButton").click(function (e) {
+            let params = new URL(document.location).searchParams;
+            let id = params.get("id");
+            //alert(id);
+            (data = JSON.stringify({
+              uid: $("#uid").val(),
+              uname: $("#uname").val(),
+              jfrom: $("#jfrom").val(),
+              jto: $("#jto").val(),
+              nticket: $("#ntick").val(),
+              doj: $("#doj").val(),
+              cid: selected_val,
+            })),
+              //alert(data);
+            $.ajax({
+              url: "https://localhost:7074/api/flht/" + id,
+              type: "put",
+              headers: {
+                "Content-Type": "application/json;charset=UTF-8",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Method": "*",
+              },
+              data: data,
+              processData: false,
+              contentType: false,
+              success: function (result, status, xhr) {
+                //alert(data);
+                e.preventDefault();
+                if (localStorage.naam == "ADMIN") {
+                  window.location.href = "showdetails.html";
+                } else {
+                  window.location.href = "show_details_user.html";
+                }
+              },
+              error: function (xhr, status, error) {
+                //console.log(xhr);
+                e.preventDefault();
+                $("#error-message").text(
+                  "There is some problem with your data!!please check,all fields are required fields"
+                );
+                $("#error-message").show();
+              },
+            });
+          });
+        } else {
+          window.location.href = "login.html";
+        }
+      });
+    </script>
+    <button
+      type="button"
+      class="btn btn-sm btn-primary"
+      align="center"
+      id="prev"
+    >
+      Back
+    </button>
+  </body>
+</html>

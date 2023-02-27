@@ -1,0 +1,266 @@
+<html>
+  <head>
+    <title>Register Flights</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    />
+    <style></style>
+  </head>
+  <body>
+    <header>
+      <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">Consolidators.com</a>
+          </div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+          <form class="navbar-form navbar-left" id="srch_frm">
+            <div class="form-group">
+              <input
+                id="srch"
+                type="text"
+                class="form-control"
+                placeholder="Search"
+                name="search"
+              />
+            </div>
+            <button type="submit" class="btn btn-default" id="srch-btn">
+              Submit
+            </button>
+          </form>
+
+          <form class="navbar-form navbar-right">
+            <button type="submit" class="btn btn-danger" id="username"></button>
+            <button type="submit" class="btn btn-danger" id="logoff-btn">
+              Logout
+            </button>
+          </form>
+        </div>
+      </nav>
+    </header>
+
+    <script
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
+      type="text/javascript"
+    ></script>
+
+    <div class="form-group">
+      <label for="ename">Number of tickets:</label>
+      <input type="text" class="form-control" id="ntick" />
+    </div>
+    <div class="form-group">
+      <label for="salary">Journey from:</label>
+      <input type="text" class="form-control" id="jfrom" />
+    </div>
+    <div class="form-group">
+      <label for="doj">Journey to:</label>
+      <input type="text" class="form-control" id="jto" />
+    </div>
+
+    <div class="form-group">
+      <label for="city">Date of journey:</label>
+      <input type="datetime-local" class="form-control" id="doj" />
+    </div>
+
+    <div class="form-group">
+      <label for="city">Company name:</label>
+      <!--<input type="text" class="form-control" id="cid" />-->
+      <select name="dropdown" id="dropdown">
+        <option id="deflt">--Select an option--</option>
+      </select>
+    </div>
+
+    <div class="text-center panel-body">
+      <button type="submit" class="btn btn-sm btn-primary" id="UpdateButton">
+        Update
+      </button>
+    </div>
+    <div
+      id="error-message"
+      style="display: none; color: red; margin-top: 10px"
+    ></div>
+
+    <script>
+      $(document).ready(function () {
+        //GetReservation();
+        if (localStorage.naam != null) {
+          var selected_val = null;
+          $("#dropdown").on("change", function () {
+            selected_val = $(this).val();
+          });
+          $("#prev").click(function (e) {
+            if (localStorage.naam == "ADMIN") {
+              window.location.href = "showdetails.html";
+            } else {
+              window.location.href = "show_details_user.html";
+            }
+          });
+          var v = document.getElementById("srch_frm");
+          v.style.visibility = "hidden";
+          var v3 = document.getElementById("deflt");
+          var nm = document.getElementById("username");
+          nm.textContent = localStorage.naam;
+          $.ajax({
+            url: "https://localhost:7074/api/company/",
+            type: "GET",
+            success: function (data) {
+              $.each(data, function (key, value) {
+                $("#dropdown").append(
+                  '<option value="' +
+                    value.cid +
+                    '">' +
+                    value["cname"] +
+                    "</option>"
+                );
+                //alert("444");
+              });
+            },
+            error: function (xhr, status, error) {
+              e.preventDefault();
+              $("#error-message").text(
+                "There is some problem ...Please report the error to our contact center"
+              );
+              $("#error-message").show();
+            },
+          });
+          $("#logoff-btn").click(function (e) {
+            e.preventDefault();
+            localStorage.removeItem("naam");
+            window.location.href = "login.html";
+          });
+          function GetReservation() {
+            let params = new URL(document.location).searchParams;
+            // alert(params);
+            let id = params.get("id");
+            // alert(id);
+            $.ajax({
+              url: "https://localhost:7074/api/flht/" + id,
+              type: "get",
+              contentType: "application/json",
+              success: function (result, status, xhr) {
+                $("#uid").val(result["uid"]);
+                $("#uname").val(result["uname"]);
+                $("#jfrom").val(result["jfrom"]);
+                $("#jto").val(result["jto"]);
+                $("#doj").val(result["doj"]);
+                $("#cid").val(result["cid"]);
+              },
+              error: function (xhr, status, error) {
+                e.preventDefault();
+                $("#error-message").text(
+                  "There is some problem!!!Please report to contact center"
+                );
+                $("#error-message").show();
+                //console.log(xhr)
+              },
+            });
+          }
+
+          $("#UpdateButton").click(async function (e) {
+            //alert(id);
+            //alert($('#cid').val());
+            //alert(selected_val);
+            const res = selected_val;
+            //alert(res);
+            const maxi = await get_max();
+            (data = JSON.stringify({
+              uid: maxi,
+              uname: localStorage.naam,
+              jfrom: $("#jfrom").val(),
+              jto: $("#jto").val(),
+              doj: $("#doj").val(),
+              nticket: $("#ntick").val(),
+              cid: selected_val,
+            })),
+              //console.log(data);
+
+            $.ajax({
+              url: "https://localhost:7074/api/flht",
+              type: "post",
+              headers: {
+                "Content-Type": "application/json;charset=UTF-8",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Method": "*",
+              },
+              data: data,
+              processData: false,
+              contentType: false,
+              success: function (result, status, xhr) {
+                if (localStorage.naam == "ADMIN") {
+                  window.location.href = "showdetails.html";
+                } else {
+                  window.location.href = "show_details_user.html";
+                }
+              },
+              error: function (xhr, status, error) {
+                //alert(data);
+                e.preventDefault();
+                $("#error-message").text(
+                  "There is some problem with your data!!please check,all fields are required fields"
+                );
+                $("#error-message").show();
+                console.log(xhr);
+              },
+            });
+          });
+          function fun(str) {
+            //alert(str);
+            return new Promise(function (resolve, reject) {
+              $.ajax({
+                url: "https://localhost:7074/api/company/" + str,
+                type: "get",
+                contentType: "application/json",
+                success: function (result, status, xhr) {
+                  alert(result.cid);
+                  resolve(result.cid);
+                },
+                error: function (xhr, status, error) {
+                  reject(xhr);
+                  e.preventDefault();
+                  $("#error-message").text(
+                    "There is some problem!!!Please report to contact center"
+                  );
+                  $("#error-message").show();
+                },
+              });
+            });
+          }
+          function get_max() {
+            //alert(str);
+            return new Promise(function (resolve, reject) {
+              $.ajax({
+                url: "https://localhost:7074/api/flht/api/flight/Getmaxi",
+                type: "get",
+                contentType: "application/json",
+                success: function (result, status, xhr) {
+                  //alert(result.cid);
+                  if(result==null)
+                  {
+                    resolve(0);
+                  }
+                  resolve(result);
+                },
+                error: function (xhr, status, error) {
+                  //e.preventDefault();
+                  $("#error-message").text(
+                    "There is some problem!!!Please report to contact center"
+                  );
+                  $("#error-message").show();
+                  reject(xhr);
+                },
+              });
+            });
+          }
+        } else {
+          window.location.href = "login.html";
+        }
+      });
+    </script>
+    <button class="btn btn-info" id="prev">Back to List</button>
+  </body>
+</html>

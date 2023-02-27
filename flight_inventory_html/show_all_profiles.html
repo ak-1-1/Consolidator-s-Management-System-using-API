@@ -1,0 +1,152 @@
+<html>
+  <head>
+    <title>All people</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    />
+    <style>
+      #user-card {
+        width: 18rem;
+        margin: 2rem auto;
+      }
+      #avatar-image {
+        width: 100%;
+        height: 10rem;
+        object-fit: cover;
+      }
+      .card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .card-title {
+        font-size: 1.5rem;
+        margin-top: 1rem;
+      }
+      .card-subtitle {
+        font-size: 1rem;
+      }
+      .card-text {
+        margin-top: 1rem;
+      }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        if (localStorage.naam != null) {
+          $("#logoff-btn").click(function (e) {
+            e.preventDefault();
+            localStorage.removeItem("naam");
+
+            window.location.href = "login.html";
+          });
+          $("#prev").click(function (e) {
+            if (localStorage.naam == "ADMIN") {
+              window.location.href = "showdetails.html";
+            } else {
+              window.location.href = "show_details_user.html";
+            }
+          });
+          var v = document.getElementById("srch_frm");
+          v.style.visibility = "hidden";
+
+          var nm = document.getElementById("username");
+          nm.textContent = localStorage.naam;
+
+          //alert(username);
+          //localStorage.naam=username;
+
+          $.ajax({
+            url: "https://localhost:7074/api/login",
+            type: "GET",
+            headers: {
+              "Content-Type": "application/json;charset=UTF-8",
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Method": "*",
+            },
+            contentType: "application/json",
+            success: function (response) {
+              var userList = $("#user-list");
+              for (var i = 0; i < response.length; i++) {
+                var user = response[i];
+                var card = $("<div>").addClass("card col-md-4");
+                var cardBody = $("<div>").addClass("card-body");
+                var avatar = $("<img>")
+                  .addClass("card-img-top")
+                  .attr(
+                    "src",
+                    "https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp"
+                  )
+                  .css({ height: 100, width: 100 });
+                var userId = $("<h5>")
+                  .addClass("card-title")
+                  .text("User ID: " + user.userid);
+                var username = $("<p>")
+                  .addClass("card-text")
+                  .text("User Name:" + user.username);
+                var phone = $("<p>")
+                  .addClass("card-text")
+                  .text("Phone:" + user.phonenumber);
+                cardBody.append(avatar, userId, username, phone);
+                card.append(cardBody);
+                userList.append(card);
+              }
+            },
+            error: function (xhr, status, error) {
+              console.log("Login failed");
+              $("#error-message").text(xhr.responseText);
+              $("#error-message").show();
+            },
+          });
+        } else {
+          window.location.href = "login.html";
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <header>
+      <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">Consolidators.com</a>
+          </div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+          <form class="navbar-form navbar-left" id="srch_frm">
+            <div class="form-group">
+              <input
+                id="srch"
+                type="text"
+                class="form-control"
+                placeholder="Search"
+                name="search"
+              />
+            </div>
+            <button type="submit" class="btn btn-default" id="srch-btn">
+              Submit
+            </button>
+          </form>
+
+          <form class="navbar-form navbar-right">
+            <button type="submit" class="btn btn-danger" id="username"></button>
+            <button type="submit" class="btn btn-danger" id="logoff-btn">
+              Logout
+            </button>
+          </form>
+        </div>
+      </nav>
+    </header>
+    <section style="background-color: #eee">
+      <div class="container">
+        <div class="row" id="user-list"></div>
+      </div>
+    </section>
+    <button class="btn btn-danger" id="prev">Back to list</button>
+  </body>
+</html>
